@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Inspection History | Legal Metrology Portal{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="{% url 'scans:dashboard' %}">Dashboard</a> <span>/</span> History
+</div>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Packaging Inspection Records</h1>
+    <p class="page-subtitle">Search, filter, and review historical Legal Metrology compliance audits</p>
+  </div>
+  <div>
+    <a href="{% url 'scans:create' %}" class="btn btn-primary">
+      + New Inspection Scan
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filtering Form -->
+<div class="card" style="margin-bottom: 1.25rem;">
+  <div class="card-body" style="padding: 1rem 1.25rem;">
+    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) 90px; gap: 0.75rem; align-items: end;">
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">Search Brand / Keyword</label>
+        <input type="text" name="q" value="{{ current_q }}" class="form-control" placeholder="Search by name or notes">
+      </div>
+
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">Compliance Status</label>
+        <select name="status" class="form-control">
+          <option value="">All Statuses</option>
+          <option value="COMPLIANT" {% if current_status == "COMPLIANT" %}selected{% endif %}>Compliant</option>
+          <option value="NON_COMPLIANT" {% if current_status == "NON_COMPLIANT" %}selected{% endif %}>Non-Compliant</option>
+          <option value="NEEDS_REVIEW" {% if current_status == "NEEDS_REVIEW" %}selected{% endif %}>Needs Review</option>
+          <option value="PROCESSING" {% if current_status == "PROCESSING" %}selected{% endif %}>Processing</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">Category</label>
+        <select name="category" class="form-control">
+          <option value="">All Categories</option>
+          <option value="food" {% if current_category == "food" %}selected{% endif %}>Food &amp; Beverages</option>
+          <option value="cosmetics" {% if current_category == "cosmetics" %}selected{% endif %}>Cosmetics</option>
+          <option value="electronics" {% if current_category == "electronics" %}selected{% endif %}>Electronics</option>
+          <option value="imported" {% if current_category == "imported" %}selected{% endif %}>Imported Goods</option>
+          <option value="general" {% if current_category == "general" %}selected{% endif %}>General Merchandise</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">From Date</label>
+        <input type="date" name="date_from" value="{{ current_date_from }}" class="form-control">
+      </div>
+
+      <div>
+        <label class="form-label" style="font-size: 0.78rem;">To Date</label>
+        <input type="date" name="date_to" value="{{ current_date_to }}" class="form-control">
+      </div>
+
+      <div>
+        <button type="submit" class="btn btn-secondary" style="width: 100%;">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Scans Results Table -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Inspection ID</th>
+          <th>Product / Brand</th>
+          <th>Inspector</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Score</th>
+          <th>Date</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for scan in scans %}
+          <tr>
+            <td>
+              <a href="{{ scan.get_absolute_url }}">
+                <strong>INSP-{{ scan.id|stringformat:"06d" }}</strong>
+              </a>
+            </td>
+            <td>
+              <strong>{{ scan.product_name|default:"Unnamed Commodity" }}</strong>
+              {% if scan.pre_packed_type %}
+                <div style="font-size: 0.75rem; color: var(--text-muted);">{{ scan.pre_packed_type }}</div>
+              {% endif %}
+            </td>
+            <td>{{ scan.user.username }}</td>
+            <td>{{ scan.get_category_display }}</td>
+            <td>
+              <span class="badge {{ scan.status_badge_class }}">
+                {{ scan.get_status_display }}
+              </span>
+            </td>
+            <td style="font-variant-numeric: tabular-nums; font-weight: 600;">
+              {{ scan.score }}%
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">
+              {{ scan.created_at|date:"d-M-Y H:i" }}
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <a href="{{ scan.get_absolute_url }}" class="btn btn-secondary btn-sm">Inspect</a>
+              <a href="{% url 'reports:download_pdf' scan.pk %}" class="btn btn-secondary btn-sm" title="Download Official PDF">PDF</a>
+              <a href="{% url 'scans:delete' scan.pk %}" class="btn btn-danger btn-sm" title="Delete record">Delete</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+              No inspection records found matching your filter criteria.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+    <div class="card-footer">
+      {% include "partials/pagination.html" %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Compliance Dashboard | Legal Metrology Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Packaging Compliance Dashboard</h1>
+    <p class="page-subtitle">Statutory compliance oversight under Legal Metrology (Packaged Commodities) Rules, 2011</p>
+  </div>
+  <div>
+    <a href="{% url 'scans:create' %}" class="btn btn-primary">
+      + New Inspection Scan
+    </a>
+  </div>
+</div>
+
+<!-- Stat Metrics Cards -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Inspected Scans</div>
+    <div class="stat-value">{{ total_scans }}</div>
+    <div class="stat-subtext">Cumulative package audits</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Fully Compliant</div>
+    <div class="stat-value" style="color: var(--status-pass-text);">{{ compliant_scans }}</div>
+    <div class="stat-subtext">Satisfies all statutory rules</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Non-Compliant Violations</div>
+    <div class="stat-value" style="color: var(--status-fail-text);">{{ non_compliant_scans }}</div>
+    <div class="stat-subtext">Critical declaration omissions</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Needs Physical Review</div>
+    <div class="stat-value" style="color: var(--status-review-text);">{{ needs_review_scans }}</div>
+    <div class="stat-subtext">Numeral height / importer checks</div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+  <!-- Recent Scans Table -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <span>Recent Compliance Inspections</span>
+      <a href="{% url 'scans:list' %}" style="font-size: 0.8rem;">View All History &raquo;</a>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Inspection ID</th>
+            <th>Product / Brand</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Score</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for scan in recent_scans %}
+            <tr>
+              <td>
+                <a href="{{ scan.get_absolute_url }}">
+                  <strong>INSP-{{ scan.id|stringformat:"06d" }}</strong>
+                </a>
+              </td>
+              <td>{{ scan.product_name|default:"Unnamed Product" }}</td>
+              <td>{{ scan.get_category_display }}</td>
+              <td>
+                <span class="badge {{ scan.status_badge_class }}">
+                  {{ scan.get_status_display }}
+                </span>
+              </td>
+              <td style="font-variant-numeric: tabular-nums; font-weight: 600;">
+                {{ scan.score }}%
+              </td>
+              <td style="color: var(--text-muted); font-size: 0.8rem;">
+                {{ scan.created_at|date:"d-M-Y H:i" }}
+              </td>
+              <td>
+                <a href="{{ scan.get_absolute_url }}" class="btn btn-secondary btn-sm">Inspect</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem 1rem;">
+                No packaging scans found. Click "+ New Inspection Scan" above to scan your first product label.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Compliance Ratio & Category Distribution -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <span>Audit Ratio Summary</span>
+    </div>
+    <div class="card-body">
+      <div style="text-align: center; margin-bottom: 1rem;">
+        <!-- Clean Responsive SVG Donut Chart -->
+        <svg viewBox="0 0 36 36" style="max-width: 140px; margin: 0 auto; display: block;">
+          <!-- Background ring -->
+          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none" stroke="var(--border-color)" stroke-width="3.5" />
+          <!-- Compliant portion -->
+          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none" stroke="var(--status-pass-border)" stroke-width="3.5"
+                stroke-dasharray="{{ compliance_rate }}, 100" stroke-linecap="round" />
+          <text x="18" y="20.5" font-size="6.5" font-weight="700" text-anchor="middle" fill="var(--text-main)">
+            {{ compliance_rate }}%
+          </text>
+        </svg>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
+          Overall Statutory Compliance Rate
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--border-color); padding-top: 0.9rem;">
+        <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--text-main);">
+          Category Breakdown
+        </div>
+        {% for cat in category_stats %}
+          <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.35rem;">
+            <span style="color: var(--text-secondary);">{{ cat.category|title }}</span>
+            <span style="font-weight: 600; color: var(--text-main);">{{ cat.count }}</span>
+          </div>
+        {% empty %}
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">No categories recorded.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

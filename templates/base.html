@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>{% block title %}Legal Metrology Packaged Commodity Compliance Checker{% endblock %}</title>
+
+  <!-- Immediate inline theme script to eliminate theme flash -->
+  <script>
+    (function() {
+      var savedTheme = localStorage.getItem('theme');
+      var systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% include "partials/navbar.html" %}
+
+  <main class="main-container" id="main-content">
+    {% include "partials/messages.html" %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="portal-footer">
+    <div style="max-width: 1300px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      <div>
+        Legal Metrology (Packaged Commodities) Rules, 2011 Compliance Verification System
+      </div>
+      <div>
+        Government of India | Ministry of Consumer Affairs, Food &amp; Public Distribution
+      </div>
+    </div>
+  </footer>
+
+  <!-- Plain OCR processing loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay" role="dialog" aria-modal="true" aria-label="Processing OCR Analysis">
+    <div class="loading-spinner"></div>
+    <div style="font-weight: 600; font-size: 1rem;">Processing Packaging Label...</div>
+    <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 0.25rem;">Running OpenCV preprocessing, Tesseract OCR, and statutory compliance checks</div>
+  </div>
+
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

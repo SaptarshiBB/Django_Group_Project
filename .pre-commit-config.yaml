@@ -1,0 +1,18 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: block-sensitive-files
+        name: Block Sensitive Files (.env, db.sqlite3)
+        entry: bash -c 'for file in "$@"; do if [[ "$file" =~ (\.env$|\.env\.|\.sqlite3$) ]] && [[ "$file" != ".env.example" ]]; then echo "ERROR: Attempting to commit forbidden secret or database file: $file"; exit 1; fi; done' --
+        language: system
+        stages: [commit]

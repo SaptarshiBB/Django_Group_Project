@@ -1,0 +1,1 @@
+"""Scans migrations initialization."""

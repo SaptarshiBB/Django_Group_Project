@@ -1,0 +1,56 @@
+<header class="portal-header">
+  <div class="portal-topbar">
+    <a href="{% url 'scans:dashboard' %}" class="portal-brand">
+      <span>Legal Metrology Compliance Portal</span>
+      <span class="portal-brand-badge">PCR 2011</span>
+    </a>
+
+    {% if user.is_authenticated %}
+      <nav aria-label="Portal Primary Navigation">
+        <ul class="portal-nav">
+          <li>
+            <a href="{% url 'scans:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'scans:list' %}" class="{% if request.resolver_match.url_name == 'list' %}active{% endif %}">
+              Inspection History
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'scans:create' %}" class="{% if request.resolver_match.url_name == 'create' %}active{% endif %}">
+              + New Scan
+            </a>
+          </li>
+          {% if user.is_staff or user.is_superuser %}
+            <li>
+              <a href="{% url 'admin:index' %}" target="_blank">
+                Admin Console
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+
+    <div class="portal-actions">
+      <button type="button" class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle theme">
+        Theme: Light
+      </button>
+
+      {% if user.is_authenticated %}
+        <span style="font-size: 0.85rem; color: var(--text-secondary); padding: 0 0.25rem;">
+          Officer: <strong>{{ user.username }}</strong>
+        </span>
+        <form method="post" action="{% url 'accounts:logout' %}" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary btn-sm">Sign Out</button>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">Sign In</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-secondary btn-sm">Register</a>
+      {% endif %}
+    </div>
+  </div>
+</header>

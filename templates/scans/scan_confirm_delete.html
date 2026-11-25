@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm Deletion | Legal Metrology Portal{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="{% url 'scans:dashboard' %}">Dashboard</a> <span>/</span>
+  <a href="{% url 'scans:list' %}">History</a> <span>/</span>
+  Delete Scan
+</div>
+
+<div style="max-width: 520px; margin: 3rem auto;">
+  <div class="card">
+    <div class="card-header" style="background-color: var(--status-fail-bg); color: var(--status-fail-text);">
+      <span>Confirm Inspection Record Deletion</span>
+    </div>
+    <div class="card-body">
+      <p style="font-size: 0.9rem; margin-bottom: 1rem;">
+        Are you sure you want to permanently delete inspection record:
+      </p>
+
+      <div style="padding: 0.75rem 1rem; background-color: var(--bg-surface-alt); border-radius: var(--radius-sm); margin-bottom: 1.25rem;">
+        <strong>INSP-{{ object.id|stringformat:"06d" }}</strong> — {{ object.product_name|default:"Unnamed Product" }}
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+          Created: {{ object.created_at|date:"d-M-Y H:i" }} &bull; Status: {{ object.get_status_display }}
+        </div>
+      </div>
+
+      <p style="font-size: 0.82rem; color: var(--status-fail-text); margin-bottom: 1.5rem;">
+        This action cannot be undone. Associated specimen packaging images and rule verification results will be permanently removed.
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="submit" class="btn btn-danger">Yes, Delete Inspection</button>
+          <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

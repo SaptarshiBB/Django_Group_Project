@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Inspection Result INSP-{{ scan.id|stringformat:"06d" }} | Legal Metrology Portal{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="{% url 'scans:dashboard' %}">Dashboard</a> <span>/</span>
+  <a href="{% url 'scans:list' %}">History</a> <span>/</span>
+  Inspection #{{ scan.id }}
+</div>
+
+<div class="page-header">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+      <h1 class="page-title">{{ scan.product_name|default:"Packaged Commodity Inspection" }}</h1>
+      <span class="badge {{ scan.status_badge_class }}" style="font-size: 0.85rem; padding: 0.35rem 0.65rem;">
+        {{ scan.get_status_display }}
+      </span>
+    </div>
+    <p class="page-subtitle">
+      Inspection ID: <strong>INSP-{{ scan.id|stringformat:"06d" }}</strong> &bull;
+      Audited: {{ scan.created_at|date:"d-M-Y H:i" }} IST &bull;
+      Inspector: {{ scan.user.username }} &bull;
+      Category: {{ scan.get_category_display }}
+    </p>
+  </div>
+  <div style="display: flex; gap: 0.6rem;">
+    <a href="{% url 'reports:download_pdf' scan.pk %}" class="btn btn-primary">
+      Download Official PDF Report
+    </a>
+    <a href="{% url 'scans:delete' scan.pk %}" class="btn btn-danger">
+      Delete
+    </a>
+  </div>
+</div>
+
+<!-- Score and Summary Banner -->
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="card-body" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1.25rem 1.5rem;">
+    <div>
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">
+        Statutory Compliance Rating
+      </div>
+      <div style="font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-top: 0.2rem;">
+        {{ scan.score }}% <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">adherence score</span>
+      </div>
+    </div>
+
+    <div style="font-size: 0.82rem; color: var(--text-secondary); max-width: 650px; line-height: 1.4;">
+      <strong>Statutory Verification Notice:</strong> Evaluated under the Legal Metrology (Packaged Commodities) Rules, 2011.
+      All statutory rule citations must be confirmed against the latest gazette notifications.
+      You may correct any OCR misreads directly in the declarations table below and re-evaluate compliance at any time.
+    </div>
+  </div>
+</div>
+
+<!-- Specimen Packaging Images Grid -->
+{% if images %}
+  <div class="card">
+    <div class="card-header">
+      <span>Uploaded Specimen Packaging Panels ({{ images|length }})</span>
+    </div>
+    <div class="card-body" style="padding: 1rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
+        {% for img in images %}
+          <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.5rem; background: var(--bg-surface-alt);">
+            {% if img.image %}
+              <a href="{{ img.image.url }}" target="_blank" rel="noopener">
+                <img src="{{ img.image.url }}" alt="Specimen Panel" style="width: 100%; height: 160px; object-fit: contain; background: #000; border-radius: var(--radius-sm); display: block;">
+              </a>
+            {% else %}
+              <div style="width: 100%; height: 160px; background: var(--bg-surface); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.8rem; border-radius: var(--radius-sm); border: 1px dashed var(--border-color-darker);">
+                [Specimen Label Record]
+              </div>
+            {% endif %}
+            <div style="margin-top: 0.5rem; font-size: 0.78rem; display: flex; justify-content: space-between;">
+              <span style="font-weight: 600;">{{ img.get_label_type_display }}</span>
+              <span style="color: var(--text-muted);">OCR: {{ img.avg_confidence }}%</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Collapsible Raw OCR Text Section -->
+<div class="card">
+  <button type="button" class="collapsible-trigger" data-collapse-target="rawOcrSection" aria-expanded="false">
+    <span>View Extracted Raw OCR Text (All Panels)</span>
+    <span style="font-size: 0.8rem; color: var(--text-muted);">&#9662; Expand / Collapse</span>
+  </button>
+  <div id="rawOcrSection" class="raw-ocr-box" style="display: none;">
+    {{ scan.combined_ocr_text|default:"[No text detected from image]" }}
+  </div>
+</div>
+
+<!-- Editable Declarations Table Form -->
+<div class="card">
+  <div class="card-header">
+    <span>Mandatory Declarations Verification (Rule 6)</span>
+    <span style="font-size: 0.78rem; color: var(--text-muted);">Edit any OCR inaccuracies and click re-evaluate</span>
+  </div>
+  <form method="post" action="{% url 'scans:recalculate' scan.pk %}">
+    {% csrf_token %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 250px;">Statutory Declaration</th>
+            <th>Extracted / Verified Value</th>
+            <th style="width: 130px;">Source Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for field in extracted_fields %}
+            <tr>
+              <td>
+                <div style="font-weight: 600; color: var(--text-main);">
+                  {{ field.label|default:field.key }}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                  Key: <code>{{ field.key }}</code>
+                </div>
+              </td>
+              <td>
+                <input type="text"
+                       name="field_{{ field.key }}"
+                       value="{{ field.value }}"
+                       class="form-control"
+                       style="padding: 0.4rem 0.6rem; font-size: 0.88rem;"
+                       placeholder="Enter or correct label declaration">
+              </td>
+              <td>
+                {% if field.is_user_edited %}
+                  <span class="badge badge-pass" style="font-size: 0.7rem;">Verified by User</span>
+                {% elif field.confidence > 0 %}
+                  <span class="badge badge-pending" style="font-size: 0.7rem;">OCR ({{ field.confidence|floatformat:0 }}%)</span>
+                {% else %}
+                  <span class="badge badge-fail" style="font-size: 0.7rem;">Not Found</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+      <button type="submit" class="btn btn-primary">
+        Save Corrections &amp; Re-evaluate Compliance Rules
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Rule-by-Rule Compliance Evaluation Matrix -->
+<div class="card">
+  <div class="card-header">
+    <span>Rule-by-Rule Statutory Compliance Evaluation Matrix</span>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 140px;">Rule Reference</th>
+          <th style="width: 200px;">Statutory Subject</th>
+          <th style="width: 120px;">Verdict</th>
+          <th>Findings &amp; Legal Evaluation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for res in rule_results %}
+          <tr>
+            <td>
+              <strong>{{ res.rule.rule_reference }}</strong>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">{{ res.rule.code }}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600;">{{ res.rule.title }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Severity: {{ res.rule.get_severity_display }}</div>
+            </td>
+            <td>
+              {% if res.status == "PASS" %}
+                <span class="badge badge-pass">PASS</span>
+              {% elif res.status == "FAIL" %}
+                <span class="badge badge-fail">FAIL</span>
+              {% elif res.status == "WARNING" %}
+                <span class="badge badge-warning">WARNING</span>
+              {% else %}
+                <span class="badge badge-review">NEEDS REVIEW</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="font-size: 0.85rem; color: var(--text-main);">
+                {{ res.message }}
+              </div>
+              {% if res.matched_text %}
+                <div style="margin-top: 0.35rem; font-size: 0.78rem; color: var(--text-muted);">
+                  Matched text: <code>{{ res.matched_text|truncatechars:120 }}</code>
+                </div>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+              No compliance rules evaluated. Click "Save Corrections &amp; Re-evaluate" above to evaluate.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

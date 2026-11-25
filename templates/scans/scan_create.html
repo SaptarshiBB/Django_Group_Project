@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}New Packaging Compliance Scan | Legal Metrology Portal{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="{% url 'scans:dashboard' %}">Dashboard</a> <span>/</span> New Scan
+</div>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">New Packaged Commodity Inspection</h1>
+    <p class="page-subtitle">Upload specimen label photographs to run automated OCR and Legal Metrology rule checks</p>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="scanUploadForm" novalidate>
+  {% csrf_token %}
+
+  <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 1.5rem; align-items: start;">
+    <!-- Left Column: Packaging Image Upload & Preview -->
+    <div class="card">
+      <div class="card-header">
+        <span>Packaging &amp; Label Images (Front, Back, Side Panels)</span>
+      </div>
+      <div class="card-body">
+        {% if form.images.errors %}
+          <div class="alert alert-error">
+            {% for error in form.images.errors %}<div>{{ error }}</div>{% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Accessible Drag & Drop Dropzone -->
+        <label for="id_images" class="dropzone-container" id="uploadDropzone" tabindex="0">
+          <div class="dropzone-icon">&#8679;</div>
+          <div class="dropzone-title">Click to Browse or Drag &amp; Drop Packaging Images</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Upload one or multiple panels (JPG, PNG, WEBP). Maximum 10 MB per file.
+          </div>
+          <div style="display: none;">
+            {{ form.images }}
+          </div>
+        </label>
+
+        <!-- Preview Grid Container for dropped/selected files -->
+        <div id="previewGrid" class="dropzone-preview-grid"></div>
+
+        <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+          <strong>Tip for best OCR accuracy:</strong> Ensure labels are well lit, planar, and text is in sharp focus. If inspecting multiple panels (e.g. principal display panel and back informational panel), select both files together.
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Product Metadata -->
+    <div class="card">
+      <div class="card-header">
+        <span>Commodity Metadata</span>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label" for="id_product_name">Product / Brand Name (Optional)</label>
+          {{ form.product_name }}
+          <div class="form-text">e.g. Heritage Aged Basmati Rice 5kg</div>
+          {% if form.product_name.errors %}
+            <ul class="form-errors">
+              {% for error in form.product_name.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_category">Commodity Category</label>
+          {{ form.category }}
+          <div class="form-text">Selects applicable specific rule sets under PCR 2011</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_pre_packed_type">Pre-Packed Type (Optional)</label>
+          {{ form.pre_packed_type }}
+          <div class="form-text">e.g., Standard Retail Pack, Multi-piece, Combination Pack</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_notes">Inspector Notes (Optional)</label>
+          {{ form.notes }}
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+            Start OCR &amp; Compliance Verification
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
